@@ -34,7 +34,6 @@ struct LoopPass : PassInfoMixin<LoopPass> {
 
         SmallVector<Instruction *, 16> Invariants;
 
-        // Collect candidate instructions in reverse order
         for (BasicBlock *BB : L->blocks()) {
             for (auto I = BB->rbegin(); I != BB->rend(); ++I) {
                 if (isLoopInvariant(&*I, L, DT)) {
@@ -43,7 +42,6 @@ struct LoopPass : PassInfoMixin<LoopPass> {
             }
         }
 
-        // Hoist safe instructions
         for (Instruction *I : Invariants) {
             if (safeToHoist(I, L, DT)) {
                 I->moveBefore(Preheader->getTerminator());
@@ -52,20 +50,17 @@ struct LoopPass : PassInfoMixin<LoopPass> {
     }
 
     bool isLoopInvariant(Instruction *I, Loop *L, DominatorTree &DT) {
-        // Check allowed instruction types
         if (!isa<BinaryOperator>(I) && !isa<SelectInst>(I) &&
             !isa<CastInst>(I) && !isa<GetElementPtrInst>(I) && !I->isShift()) {
             return false;
         }
 
-        // Disallowed instruction types
         if (I->isTerminator() || isa<PHINode>(I)) {
             return false;
         }
 
-        // Check all operands are either:
-        // 1. Constants, or
-        // 2. Computed outside the loop
+        // we nedd to make sure that the operands are constants or expresssed
+        // outsided of loop
         for (Value *Op : I->operands()) {
             if (isa<Constant>(Op)) {
                 continue;
@@ -85,8 +80,8 @@ struct LoopPass : PassInfoMixin<LoopPass> {
             return false;
         }
 
-        // Only need to check exit dominance for potentially excepting
-        // instructions
+        // make sure that we can't have exceptions and if we can't then we check
+        // to make sure that this is safe
         if (I->mayThrow()) {
             SmallVector<BasicBlock *, 4> ExitBlocks;
             L->getExitBlocks(ExitBlocks);
