@@ -39,13 +39,9 @@ struct LoopPass : PassInfoMixin<LoopPass>
             }
 
             SmallVector<BasicBlock *, 32> allBlocks;
-            std::function<void(Loop *)> collectBlocks = [&](Loop *L)
-            {
-                allBlocks.append(L->block_begin(), L->block_end());
-                for (Loop *SubL : L->getSubLoops())
-                    collectBlocks(SubL);
-            };
-            collectBlocks(L);
+            for (BasicBlock *BB : L->getBlocks()) {
+                allBlocks.push_back(BB);
+            }
 
             unsigned instrs = 0;
             unsigned atomics = 0;
