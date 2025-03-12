@@ -1,5 +1,5 @@
 #/bin/sh
-INPUT=morebasicblocks.ll
+INPUT=simple_loop_hoist.ll
 OUTPUT=output.txt
 
-opt -load-pass-plugin build/libloop-analysis-pass.so -passes="DG43932-PD9592-loop-analysis-pass" < $INPUT >/dev/null 2> $OUTPUT
+opt -load-pass-plugin ./build/libloop-opt-pass.so -passes="DG43932-PD9592-loop-opt-pass" <$INPUT >/dev/null 2>$OUTPUT
