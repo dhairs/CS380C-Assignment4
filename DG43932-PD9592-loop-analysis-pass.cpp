@@ -54,28 +54,8 @@ struct LoopPass : PassInfoMixin<LoopPass>
                 instrs += BB->size();
                 for (Instruction &I : *BB)
                 {
-                    if (auto *LI = dyn_cast<LoadInst>(&I))
-                    {
-                        if (LI->isAtomic())
-                            atomics++;
-                    }
-                    else if (auto *SI = dyn_cast<StoreInst>(&I))
-                    {
-                        if (SI->isAtomic())
-                            atomics++;
-                    }
-                    else if (isa<AtomicRMWInst>(&I))
-                    {
+                    if (I.isAtomic())
                         atomics++;
-                    }
-                    else if (isa<AtomicCmpXchgInst>(&I))
-                    {
-                        atomics++;
-                    }
-                    else if (isa<FenceInst>(&I))
-                    {
-                        atomics++;
-                    }
                 }
             }
 
