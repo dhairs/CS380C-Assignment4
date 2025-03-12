@@ -49,11 +49,6 @@ private:
                 if (isLoopInvariant(&*I, L, DT))
                 {
                     Invariants.push_back(&*I);
-                    errs() << "is invariant!!!!!!!!!!!!!!!!!!!!!!!!\n";
-                }
-                else
-                {
-                    errs() << "is not invariant\n";
                 }
             }
         }
@@ -62,15 +57,9 @@ private:
         errs() << "HOIST PHASE\n";
         for (Instruction *I : Invariants)
         {
-            I->dump();
             if (safeToHoist(I, L, DT))
             {
                 I->moveBefore(Preheader->getTerminator());
-                errs() << "is safe to hoist\n";
-            }
-            else
-            {
-                errs() << "is not safe to hoist\n";
             }
         }
     }
@@ -118,7 +107,6 @@ private:
     {
         if (!isSafeToSpeculativelyExecute(I, nullptr, &DT))
         {
-            errs() << "not safe to spec exec\n";
             return false;
         }
 
@@ -132,7 +120,6 @@ private:
             {
                 if (!DT.dominates(I->getParent(), Exit))
                 {
-                    errs() << I->getParent() << " does not dominate " << Exit << '\n';
                     return false;
                 }
             }
