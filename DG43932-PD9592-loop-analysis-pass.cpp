@@ -71,8 +71,7 @@ struct LoopPass : PassInfoMixin<LoopPass>
                 if (!inSubLoop)
                 {
                     Instruction *Term = BB->getTerminator();
-                    if (isa<BranchInst>(Term) || isa<SwitchInst>(Term) ||
-                        isa<IndirectBrInst>(Term))
+                    if (isa<BranchInst>(Term))
                     {
                         branches++;
                     }
