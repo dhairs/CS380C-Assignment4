@@ -39,7 +39,8 @@ struct LoopPass : PassInfoMixin<LoopPass>
             }
 
             SmallVector<BasicBlock *, 32> allBlocks;
-            for (BasicBlock *BB : L->getBlocks()) {
+            for (BasicBlock *BB : L->getBlocks())
+            {
                 allBlocks.push_back(BB);
             }
 
@@ -70,20 +71,18 @@ struct LoopPass : PassInfoMixin<LoopPass>
                 if (!inSubLoop)
                 {
                     Instruction *Term = BB->getTerminator();
-                    if (isa<BranchInst>(Term) || isa<SwitchInst>(Term) || isa<IndirectBrInst>(Term))
+                    if (isa<BranchInst>(Term) || isa<SwitchInst>(Term) ||
+                        isa<IndirectBrInst>(Term))
                     {
                         branches++;
                     }
                 }
             }
 
-            errs() << loopCounter << ": func=" << funcName
-                   << ", depth=" << depth
+            errs() << loopCounter << ": func=" << funcName << ", depth=" << depth
                    << ", subLoops=" << (hasSubLoops ? "true" : "false")
-                   << ", BBs=" << topLevelBBs
-                   << ", instrs=" << instrs
-                   << ", atomics=" << atomics
-                   << ", branches=" << branches << "\n";
+                   << ", BBs=" << topLevelBBs << ", instrs=" << instrs
+                   << ", atomics=" << atomics << ", branches=" << branches << "\n";
             loopCounter++;
         }
 
@@ -101,8 +100,8 @@ struct LoopPass : PassInfoMixin<LoopPass>
 //-----------------------------------------------------------------------------
 llvm::PassPluginLibraryInfo getHelloWorldPluginInfo()
 {
-    return {LLVM_PLUGIN_API_VERSION, "DG43932-PD9592-Loop-Analysis-Pass", LLVM_VERSION_STRING,
-            [](PassBuilder &PB)
+    return {LLVM_PLUGIN_API_VERSION, "DG43932-PD9592-Loop-Analysis-Pass",
+            LLVM_VERSION_STRING, [](PassBuilder &PB)
             {
                 PB.registerPipelineParsingCallback(
                     [](StringRef Name, FunctionPassManager &FPM,
