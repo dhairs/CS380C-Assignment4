@@ -4,22 +4,101 @@
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/raw_ostream.h"
 
+
+#include "llvm/Analysis/DominanceFrontier.h"
+#include "llvm/Transforms/Utils/LoopUtils.h"
+#include "llvm/Analysis/ValueTracking.h"
+
 using namespace llvm;
 
-// New PM implementation
 struct LoopPass : PassInfoMixin<LoopPass> {
-    // Main entry point, takes IR unit to run the pass on (&F) and the
-    // corresponding pass manager (to be queried if need be)
     PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM) {
-        errs() << "hey ;)\n";
-        // get the loop information analysis passes
-        auto &li = FAM.getResult<LoopAnalysis>(F);
+        // errs() << "BEFORE TRANSFORM\n";
+        // F.dump();
+        auto &LI = FAM.getResult<LoopAnalysis>(F);
+        auto &DT = FAM.getResult<DominatorTreeAnalysis>(F);
+        // Process all loops in depth-first order
+        for (Loop *L : LI) {
+            processLoop(L, DT);
+        }
+
+        // errs() << "AFTER TRANSFORM\n";
+        // F.dump();
         return PreservedAnalyses::all();
     }
 
-    // Without isRequired returning true, this pass will be skipped for
-    // functions decorated with the optnone LLVM attribute. Note that clang -O0
-    // decorates all functions with optnone.
+private:
+    void processLoop(Loop *L, DominatorTree &DT) {
+        // Process subloops first
+        for (Loop *SubLoop : L->getSubLoops()) {
+            processLoop(SubLoop, DT);
+        }
+
+        BasicBlock *Preheader = L->getLoopPreheader();
+        if (!Preheader) return;
+
+        SmallVector<Instruction *, 16> Invariants;
+
+        // Collect candidate instructions in reverse order
+        for (BasicBlock *BB : L->blocks()) {
+            for (auto I = BB->rbegin(); I != BB->rend(); ++I) {
+                if (isLoopInvariant(&*I, L, DT)) {
+                    Invariants.push_back(&*I);
+                }
+            }
+        }
+
+        // Hoist safe instructions
+        for (Instruction *I : Invariants) {
+            if (safeToHoist(I, L, DT)) {
+                I->moveBefore(Preheader->getTerminator());
+            }
+        }
+    }
+
+    bool isLoopInvariant(Instruction *I, Loop *L, DominatorTree &DT) {
+        // First check instruction type
+        if (!isa<BinaryOperator>(I) &&
+            !isa<SelectInst>(I) &&
+            !isa<CastInst>(I) &&
+            !isa<GetElementPtrInst>(I) &&
+            !I->isShift()) {
+            return false;
+        }
+
+        if (I->isTerminator() || isa<PHINode>(I)) {
+            return false;
+        }
+        
+        for (Value *Op : I->operands()) {
+            if (Instruction *OpInst = dyn_cast<Instruction>(Op)) {
+                if (L->contains(OpInst->getParent()) || !isLoopInvariant(OpInst, L, DT)) {
+                    return false;
+                }
+            }
+            else if (!isa<Constant>(Op)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool safeToHoist(Instruction *I, Loop *L, DominatorTree &DT) {
+        if (!isSafeToSpeculativelyExecute(I)) {
+            return false;
+        }
+
+        SmallVector<BasicBlock *, 4> ExitBlocks;
+        L->getExitBlocks(ExitBlocks);
+
+        for (BasicBlock *Exit : ExitBlocks) {
+            if (!DT.dominates(I->getParent(), Exit)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     static bool isRequired() { return true; }
 };
 
