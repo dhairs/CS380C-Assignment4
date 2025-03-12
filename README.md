@@ -16,3 +16,15 @@ This should be familiar for anyone who has used CMake before. if not then follow
 - CMake build files into `./build` using `cmake -S . -B ./build`
 - Run make on the newly built files. `make -C ./build`
 
+
+# Reading Materials
+We have read the LLVM documentation, specifically the following:
+ - LLVM IR langref: https://llvm.org/docs/LangRef.html
+ - Loop terminology: https://llvm.org/docs/LoopTerminology.html
+ - Analysis passes: https://llvm.org/docs/Passes.html
+ - DominatorTree class: https://llvm.org/doxygen/classllvm_1_1DominatorTree.html
+ - LLVM data structures like SmallVector: https://llvm.org/docs/ProgrammersManual.html#llvm-adt-smallvector-h
+
+Team: Pranoy Dutta, Dhairya Gupta
+
+Feedback: The main thing that we thought was challenging was learning about all of the different LLVM functions. Once we found the necessary functions, it was pretty easy to implement.
