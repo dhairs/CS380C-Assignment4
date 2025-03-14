@@ -5,3 +5,5 @@ build/
 /.idea
 *.ll
 .vscode/
+archive.tar.gz
+a.out

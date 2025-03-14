@@ -1,5 +1,5 @@
 #/bin/sh
-INPUT=newout.ll
+INPUT=example.ll
 OUTPUT=output.ll
 
 make -C ./build
