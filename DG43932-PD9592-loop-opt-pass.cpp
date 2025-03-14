@@ -33,15 +33,6 @@ struct LoopPass : PassInfoMixin<LoopPass> {
         if (!Preheader) return;
 
         for (BasicBlock *BB : L->blocks()) {
-            // for (auto I = BB->rbegin(); I != BB->rend(); ++I) {
-            //     if (isLoopInvariant(&*I, L, DT)) {
-            //         Invariants.push_back(&*I);
-            //         printf("is loop invar\n");
-
-            //     } else {
-            //         printf("is not loop invar\n");
-            //     }
-            // }
             bool changed = true;
 
             while (changed) {
@@ -51,7 +42,6 @@ struct LoopPass : PassInfoMixin<LoopPass> {
                 for (auto I = BB->begin(); I != BB->end(); ++I) {
                     if (isLoopInvariant(&*I, L, DT)) {
                         Invariants.push_back(&*I);
-                        printf("is loop invar\n");
                     }
                 }
 
@@ -92,6 +82,7 @@ struct LoopPass : PassInfoMixin<LoopPass> {
     }
 
     bool safeToHoist(Instruction *I, Loop *L, DominatorTree &DT) {
+        // no side effects, we can just move it.
         if (isSafeToSpeculativelyExecute(I, nullptr, nullptr, &DT)) {
             return true;
         }
@@ -103,6 +94,7 @@ struct LoopPass : PassInfoMixin<LoopPass> {
 
         for (BasicBlock *Exit : ExitBlocks) {
             if (!DT.dominates(I->getParent(), Exit)) {
+                // doesn't dominate
                 return false;
             }
         }
